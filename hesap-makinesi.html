@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Hesap Makinesi</title>
+</head>
+<body>
+  <h1>Hesap Makinesi</h1>
+  <input id="a" type="number" value="7">
+  <input id="b" type="number" value="2">
+  <button type="button" onclick="goster(toplama)">Topla</button>
+  <button type="button" onclick="goster(cikarma)">Çıkar</button>
+  <button type="button" onclick="goster(carpma)">Çarp</button>
+  <button type="button" onclick="goster(bolme)">Böl</button>
+  <p id="sonuc"></p>
+
+  <script src="toplama.js"></script>
+  <script src="cikarma.js"></script>
+  <script src="carpma.js"></script>
+  <script src="bolme.js"></script>
+  <script>
+    function goster(islem) {
+      var a = Number(document.getElementById("a").value);
+      var b = Number(document.getElementById("b").value);
+      document.getElementById("sonuc").textContent = islem(a, b);
+    }
+  </script>
+</body>
+</html>
