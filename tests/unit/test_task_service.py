@@ -20,7 +20,7 @@ def test_create_strips_title_and_assigns_incrementing_ids(service: TaskService) 
     first = service.create("  market  ")
     second = service.create("fatura")
 
-    assert first.id == 12
+    assert first.id == 1
     assert first.title == "market"
     assert first.completed is False
     assert second.id == 2

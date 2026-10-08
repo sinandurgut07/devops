@@ -14,7 +14,7 @@ class TaskService:
 
     def __init__(self) -> None:
         self._tasks: dict[int, Task] = {}
-        self._next_id = 2
+        self._next_id = 1
 
     def create(self, title: str) -> Task:
         normalized = title.strip()
