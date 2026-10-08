@@ -1,0 +1,50 @@
+# Feature dalları için hızlı kontrol.
+# İş kurallarını HTTP'ye girmeden doğrular; entegrasyon testi bu kapıda yoktur.
+name: Feature CI
+
+on:
+  # develop'a açılan veya güncellenen pull request.
+  pull_request:
+    branches: [develop]
+  # main ve develop dışındaki her dala push (feature/..., bugfix/..., vb.).
+  push:
+    branches-ignore: [main, develop]
+  # Actions sekmesinden elle çalıştırmak için.
+  workflow_dispatch:
+
+# Aynı dalda yeni bir push gelince eski çalıştırmayı iptal eder.
+concurrency:
+  group: feature-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Workflow kodu yalnız okur; push veya paket yayınlama yetkisi yok.
+permissions:
+  contents: read
+
+jobs:
+  # Tek job: birim testler. PR geri bildirimi kısa kalsın diye HTTP testleri develop'a bırakılır.
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      # Depoyu runner'a alır.
+      - uses: actions/checkout@v4
+
+      # Python 3.12 kurar ve pip önbelleğini requirements dosyalarına bağlar.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      # Uygulama ve test paketlerini pip ile indirir.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # TaskService iş kurallarını çalıştırır (pytest -m unit).
+      - name: Run unit tests
+        run: pytest -m unit

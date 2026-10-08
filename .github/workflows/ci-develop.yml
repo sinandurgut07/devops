@@ -1,0 +1,76 @@
+# develop dalının bütünleşik hattı.
+# Feature merge edilince önce birim testler, onlar yeşilse HTTP entegrasyon testleri çalışır.
+name: Develop CI
+
+on:
+  # develop'a doğrudan push ve develop'a merge edilen PR'ler.
+  push:
+    branches: [develop]
+  # Actions sekmesinden elle çalıştırmak için.
+  workflow_dispatch:
+
+# Aynı dalda yeni bir push gelince eski çalıştırmayı iptal eder.
+concurrency:
+  group: develop-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Workflow kodu yalnız okur; push veya paket yayınlama yetkisi yok.
+permissions:
+  contents: read
+
+jobs:
+  # İlk kapı: iş kuralları. Integration bu job bitmeden başlamaz.
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      # Depoyu runner'a alır.
+      - uses: actions/checkout@v4
+
+      # Python 3.12 kurar ve pip önbelleğini requirements dosyalarına bağlar.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      # Uygulama ve test paketlerini pip ile indirir.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # TaskService iş kurallarını çalıştırır (pytest -m unit).
+      - name: Run unit tests
+        run: pytest -m unit
+
+  # İkinci kapı: /health ve /tasks uçlarını TestClient ile uçtan uca dener.
+  integration:
+    name: Integration tests
+    # unit kırmızıysa bu job hiç başlamaz.
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      # Job'lar ayrı makinede koştuğu için depo yeniden alınır.
+      - uses: actions/checkout@v4
+
+      # Python 3.12 kurar ve pip önbelleğini requirements dosyalarına bağlar.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      # Uygulama ve test paketlerini pip ile indirir.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      # HTTP cevaplarını (201, 404, 409, 422) doğrular (pytest -m integration).
+      - name: Run integration tests
+        run: pytest -m integration
